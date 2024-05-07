@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<parametros>
+    <numCiudadesInfectadasInicio>0</numCiudadesInfectadasInicio>
+    <numCuidadesInfectadasRonda>10</numCuidadesInfectadasRonda>
+    <numEnfermedadesActivasDerrota>50</numEnfermedadesActivasDerrota>
+    <numBrotesDerrota>50</numBrotesDerrota>
+    <porcentajeVacuna>5</porcentajeVacuna>
+</parametros>
