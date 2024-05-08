@@ -15,9 +15,11 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class Tablero extends JFrame {
 	
+	int perder = 0;
 	int enfAct = 0;
 	int numBrot = 0;
 	int acciones  = 4;
@@ -989,7 +991,8 @@ public class Tablero extends JFrame {
 					//System.out.println("Ciudad infectada: "+ciudades[i].getnombre());
 					j++;
 					enfAct++;
-				}if(ciudades[i].getinfeccion() == 3) {
+				}else if(ciudades[i].getinfeccion() == 3) {
+					//JOptionPane.showMessageDialog(null, "La ciudad que ha brotado: " + ciudades[i].getnombre());
 					brotarCiudades(ciudades, ciudades[i], infectadasRonda, enfActDerr, brotDerr);
 				}
 			}
@@ -1003,8 +1006,8 @@ public class Tablero extends JFrame {
 		}
 		Conquistas.setText("conquistas: " + enfAct + "/" + enfActDerr);
 		
-		if(enfAct == enfActDerr) {
-			JOptionPane.showMessageDialog(null, "Has perdido");
+		if(enfAct >= enfActDerr && perder < 1) {
+			perder++;
 			ventanaSecundaria.dispose();
 			dispose();
 		}
@@ -1020,44 +1023,63 @@ public class Tablero extends JFrame {
 		}
 	}
 	
-	private void brotarCiudades(Ciudad [] ciudades, Ciudad ciudad, int infectadasRonda, int enfActDerr, int brotDerr) {
+	private void brotarCiudades(Ciudad[] ciudades, Ciudad ciudad, int infectadasRonda, int enfActDerr, int brotDerr) {
 		numBrot++;
-		Brotes.setText(("brotes: " + numBrot + "/" + brotDerr));
-		int i = 0;
-		int j = 0;
-		int z = 0;
-		ArrayList<String> colindantes = new ArrayList<String>();
-		for(i = 0; i < ciudad.ciudadesColindantes.length; i++) {
-			colindantes.add(ciudad.ciudadesColindantes[i]);
-		}
+	    Brotes.setText("brotes: " + numBrot + "/" + brotDerr);
+	    
+	    ciudad.brotada = true;
+	    ArrayList<String> colindantes = new ArrayList<>();
+	    for (int i = 0; i < ciudad.ciudadesColindantes.length; i++) {
+	        colindantes.add(ciudad.ciudadesColindantes[i]);
+	    }
+
+	    while (!colindantes.isEmpty() && (enfAct <= enfActDerr || numBrot <= brotDerr)) {
+	        ArrayList<String> nuevasColindantes = new ArrayList<>();
+	        for (String colindante : colindantes) {
+	            for (int i = 0; i < ciudades.length; i++) {
+	                if (ciudades[i].getnombre().equals(colindante) && ciudades[i].brotada != true) {
+	                    if (ciudades[i].getinfeccion() < 3) {
+	                        ciudades[i].setinfeccion(ciudades[i].getinfeccion() + 1);
+	                        enfAct++;
+	                        Conquistas.setText("conquistas: " + enfAct + "/" + enfActDerr);
+	                    } else {
+	                        numBrot++;
+	                        Brotes.setText("brotes: " + numBrot + "/" + brotDerr);
+	                        for (int z = 0; z < ciudades[i].ciudadesColindantes.length; z++) {
+	                            if (!colindantes.contains(ciudades[i].ciudadesColindantes[z])) {
+	                                nuevasColindantes.add(ciudades[i].ciudadesColindantes[z]);
+	                            }
+	                        }
+	                        // Marcar la ciudad como brotada
+	                        ciudades[i].brotada = true;
+	                    }
+	                }
+	            }
+	        }
+	        
+	        colindantes.clear();
+	        colindantes.addAll(nuevasColindantes);
+	        nuevasColindantes.clear();
+	        if(enfAct >= enfActDerr) {
+	        	colindantes.clear();
+	        }else if(numBrot >= brotDerr) {
+	        	colindantes.clear();
+	        }
+	    }
 		
-		while(colindantes.size() != 0 && enfAct != enfActDerr && numBrot!= brotDerr) {
-			for(i = 0; i < ciudades.length; i++) {
-				for(j = 0; j < colindantes.size(); j++) {
-					if(ciudades[i].getnombre() == colindantes.get(j)) {
-						if(ciudades[i].getinfeccion() < 3) {
-							ciudades[i].setinfeccion(ciudades[i].getinfeccion() + 1);
-							enfAct++;
-							Conquistas.setText("conquistas: " + enfAct + "/" + enfActDerr);
-						}else if(ciudades[i].getinfeccion() == 3) {
-							numBrot++;
-							Brotes.setText(("brotes: " + numBrot + "/" + brotDerr));
-							for(z = 0; z < ciudades[i].ciudadesColindantes.length; z++) {
-								colindantes.add(ciudades[i].ciudadesColindantes[z]);
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		if(enfAct == enfActDerr || numBrot == brotDerr) {
-			JOptionPane.showMessageDialog(null, "Has perdido");
-			ventanaSecundaria.dispose();
-			dispose();
-		}
-		
+	    for(int i = 0; i < ciudades.length; i++) {
+	    	ciudades[i].brotada = false;
+	    }
+
+	    
+		if ((enfAct >= enfActDerr || numBrot >= brotDerr) && perder < 1) {
+			perder++;
+	        JOptionPane.showMessageDialog(null, "Has perdido");
+	        ventanaSecundaria.dispose();
+	        dispose();
+	    }
 	}
+
 	
 	private void modifcarAcciones() {
 		Acciones.setText("acciones: " + acciones);
@@ -1074,7 +1096,7 @@ public class Tablero extends JFrame {
 			JOptionPane.showMessageDialog(null, "No puedes investigar, no tienes acciones suficientes");
 		}else {
 			vacuna.setporcentaje(vacuna.getporcentaje() + porcVac);
-			prog.setValue(vacuna.getporcentaje());
+			prog.setValue((int)vacuna.getporcentaje());
 			if(vacunas[0].getporcentaje() == 100 && vacunas[1].getporcentaje() == 100 && vacunas[2].getporcentaje() == 100 && vacunas[3].getporcentaje() == 100) {
             	JOptionPane.showMessageDialog(null, "¡Has ganado!");
             	menu men = new menu();
@@ -1096,7 +1118,9 @@ public class Tablero extends JFrame {
         					//System.out.println("Ciudad infectada: "+ciudades[i].getnombre());
         					j++;
         					enfAct++;
-        				}if(ciudades[i].getinfeccion() == 3) {
+        					//JOptionPane.showMessageDialog(null, "La ciudad que se ha infectado: " + ciudades[i].getnombre() + " su nivel de infección: " + ciudades[i].getinfeccion());
+        				}else if(ciudades[i].getinfeccion() == 3) {
+        					//JOptionPane.showMessageDialog(null, "La ciudad que ha brotado: " + ciudades[i].getnombre() + " su nivel de infección: " + ciudades[i].getinfeccion());
         					brotarCiudades(ciudades, ciudades[i], infectadasRonda, enfActDerr, brotDerr);
         				}
         			}
@@ -1110,7 +1134,8 @@ public class Tablero extends JFrame {
         		}
         		Conquistas.setText("conquistas: " + enfAct + "/" + enfActDerr);
         		
-        		if(enfAct == enfActDerr) {
+        		if(enfAct >= enfActDerr && perder < 1) {
+        			perder++;
         			JOptionPane.showMessageDialog(null, "Has perdido");
         			ventanaSecundaria.dispose();
         			dispose();
